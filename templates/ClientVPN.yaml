@@ -1,0 +1,454 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Client VPN Demo
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: VPC Settings
+      Parameters:
+        - VPNVPCCIDR
+        - VPNVPCPublicSubnetCIDR
+        - VPNVPCPrivateSubnetCIDR
+    - Label:
+        default: Client VPN Settings
+      Parameters:
+        - VPNClientCIDR
+        - ClientVPNIDPName
+        - ClientVPNSelfServiceIDPName
+
+Parameters:
+  VPNVPCCIDR:
+    Description: CIDR Block for the VPNVPC
+    Type: String
+    Default: 172.16.0.0/16
+    AllowedPattern: '[a-zA-Z0-9]+\..+'
+  VPNVPCPublicSubnetCIDR:
+    Description: CIDR Block for VPNVPC - Public Subnet
+    Type: String
+    Default: 172.16.1.0/24
+    AllowedPattern: '[a-zA-Z0-9]+\..+'
+  VPNVPCPrivateSubnetCIDR:
+    Description: CIDR Block for VPNVPC - Private Subnet
+    Type: String
+    Default: 172.16.2.0/24
+    AllowedPattern: '[a-zA-Z0-9]+\..+'
+  VPNClientCIDR:
+    Description: CIDR Block for VPNClient
+    Type: String
+    Default: 172.17.0.0/16
+    AllowedPattern: '[a-zA-Z0-9]+\..+'
+  ClientVPNIDPName:
+    Description: SAML IDP Name for Client VPN SSO that has been set in IAM IDP
+    Type: String
+    Default: aws-client-vpn
+  ClientVPNSelfServiceIDPName:
+    Description: SAML IDP Name for Client VPN Selfservice that has been set in IAM IDP
+    Type: String
+    Default: aws-client-vpn-self-service
+
+Mappings:
+  RegionAMIMap:
+    us-west-2:
+      AMI: ami-0721c9af7b9b75114
+    ap-northeast-1:
+      AMI: ami-02892a4ea9bfa2192
+    ap-southeast-1:
+      AMI: ami-018c1c51c7a13e363
+
+Resources:
+  VPNVPC:
+    Type: 'AWS::EC2::VPC'
+    Properties:
+      CidrBlock: !Ref VPNVPCCIDR
+      EnableDnsHostnames: 'true'
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-VPNVPC
+        - Key: Purpose
+          Value: Demo
+        - Key: Network
+          Value: Public
+
+  VPNVPCPublicSubnet:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPNVPC
+      CidrBlock: !Ref VPNVPCPublicSubnetCIDR
+      MapPublicIpOnLaunch: 'true'
+      AvailabilityZone: !Select 
+        - 0
+        - Fn::GetAZs: !Ref 'AWS::Region'
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-VPNVPC-PublicSubnet
+        - Key: Purpose
+          Value: Demo
+        - Key: Network
+          Value: Public
+  VPNVPCPrivateSubnet:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPNVPC
+      CidrBlock: !Ref VPNVPCPrivateSubnetCIDR
+      AvailabilityZone: !Select 
+        - 0
+        - Fn::GetAZs: !Ref 'AWS::Region'
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-VPNVPC-PrivateSubnet
+        - Key: Purpose
+          Value: Demo
+        - Key: Network
+          Value: Private
+
+  VPNVPCInternetGateway:
+    Type: 'AWS::EC2::InternetGateway'
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-VPNVPC-IGW
+        - Key: Purpose
+          Value: Demo
+        - Key: Network
+          Value: Public
+  VPNVPCAttachGateway:
+    Type: 'AWS::EC2::VPCGatewayAttachment'
+    Properties:
+      VpcId: !Ref VPNVPC
+      InternetGatewayId: !Ref VPNVPCInternetGateway
+  VPNVPCNatGateway:
+    Type: 'AWS::EC2::NatGateway'
+    Properties:
+      AllocationId: !GetAtt VPNVPCNatGatewayEIP.AllocationId
+      SubnetId:
+         Ref: VPNVPCPublicSubnet
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-VPNVPC-NATGW
+        - Key: Purpose
+          Value: Demo
+        - Key: Network
+          Value: Public
+  VPNVPCNatGatewayEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-VPNVPC-NAT-EIP
+        - Key: Purpose
+          Value: Demo
+  VPNVPCPublicRouteTable:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref VPNVPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-VPNVPC-PublicRT
+        - Key: Purpose
+          Value: Demo
+        - Key: Network
+          Value: Public
+  VPNVPCPublicRouteIGW:
+    Type: 'AWS::EC2::Route'
+    Properties:
+      RouteTableId: !Ref VPNVPCPublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref VPNVPCInternetGateway
+  VPNPublicSubnetRouteTableAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref VPNVPCPublicSubnet
+      RouteTableId: !Ref VPNVPCPublicRouteTable
+  VPNVPCPrivateRouteTable:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref VPNVPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-VPNVPC-PrivateRT
+        - Key: Purpose
+          Value: Demo
+        - Key: Network
+          Value: Private
+  VPNVPCPrivateRouteNatGW:
+    Type: 'AWS::EC2::Route'
+    Properties:
+      RouteTableId: !Ref VPNVPCPrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref VPNVPCNatGateway
+  VPNVPCPrivateSubnetRouteTableAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref VPNVPCPrivateSubnet
+      RouteTableId: !Ref VPNVPCPrivateRouteTable
+
+  VPNVPCHTTPICMPSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Enable HTTP/ICMP Access
+      VpcId: !Ref VPNVPC
+      SecurityGroupIngress:
+        - FromPort: 8
+          ToPort: -1
+          IpProtocol: "icmp"
+          Description: "Allow ICMP traffic"
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: '0'
+          ToPort: '65535'
+          CidrIp: 0.0.0.0/0
+        - FromPort: 8
+          ToPort: -1
+          IpProtocol: "icmp"
+          Description: "Allow ICMP traffic"
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-VPNVPC-HTTPICMPSG
+
+  # Parameter for ServerCertificate Arn imported in ACM 
+  ServerCertificateArnParameter:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: !Sub ${AWS::StackName}-clientvpn-servercert-arn
+      Type: "String"
+      Value: "dummy"
+      Description: "Parameter for ServerCertificate Arn imported in ACM "
+
+  # Web Instances Settings For VPC Connection test And Import Server Certification to ACM
+  EC2SSMRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - 'ec2.amazonaws.com'
+            Action:
+              - 'sts:AssumeRole'
+      Path: '/'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - arn:aws:iam::aws:policy/AWSCertificateManagerFullAccess
+        - arn:aws:iam::aws:policy/AmazonSSMFullAccess
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-EC2SSMRole
+
+  EC2SSMRoleInstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    DependsOn:
+      - EC2SSMRole
+    Properties:
+      Roles:
+        - !Ref EC2SSMRole
+      InstanceProfileName: !Sub ${AWS::StackName}-EC2SSMRole
+
+  PrivateWebInstance:
+    Type: 'AWS::EC2::Instance'
+    DependsOn:
+      - VPNVPCPrivateSubnetRouteTableAssociation
+      - ServerCertificateArnParameter
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT5M
+    Metadata:
+      AWS::CloudFormation::Init:
+        configSets:
+          default:
+            - "php-config"
+        php-config:
+          packages:
+            yum:
+              httpd: []
+              php: []
+          files:
+            /var/www/html/index.php:
+              content: |
+                <?php
+                  # Retrieve Instance metadata
+                  $url = "http://169.254.169.254/latest/meta-data/instance-id";
+                  $instance_id = file_get_contents($url);
+                  $url = "http://169.254.169.254/latest/meta-data/local-ipv4";
+                  $local_ip = file_get_contents($url);
+                ?>
+                <html>
+                <head>
+                  <title>Hello!</title>
+                </head>
+                <body style="background: #d9dae9; text-align: center;">
+                    <h1>AWS VPN Demo</h1><br/>
+                    <h1>Instance ID: <?php echo $instance_id; ?></h1>
+                    <h1>Local IP: <?php echo $local_ip; ?></h1>
+                    <p>This information has been retrieved from the Instance Metadata service.</p>
+                </body>
+                </html>
+              mode: '000644'
+              owner: apache
+              group: apache
+          services:
+            sysvinit:
+              httpd:
+                enabled: 'true'
+                ensureRunning: 'true'
+    Properties:
+      ImageId: !FindInMap [RegionAMIMap, !Ref "AWS::Region", AMI]
+      InstanceType: t2.micro
+      IamInstanceProfile: !Ref EC2SSMRoleInstanceProfile
+      SubnetId: !Ref VPNVPCPrivateSubnet
+      SecurityGroupIds:
+        - !Ref VPNVPCHTTPICMPSecurityGroup
+      Tags: 
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-VPNVPC-PrivateWebInstance
+        - Key: Purpose
+          Value: Demo
+        - Key: Network
+          Value: Private
+      UserData: 
+        'Fn::Base64': 
+          !Sub | 
+            #!/bin/bash -ex 
+            # Update 
+            yum install git -y
+            yum update -y
+ 
+            # Create Server certficiate and import to ACM for Client VPN Endpoint
+            export EASYRSA_BATCH=1
+            git clone https://github.com/OpenVPN/easy-rsa.git
+            cd easy-rsa/easyrsa3
+            ./easyrsa init-pki
+            ./easyrsa build-ca nopass
+            ./easyrsa build-server-full ${AWS::StackName}-server nopass
+
+            mkdir ../../server_cert/
+            cp pki/ca.crt ../../server_cert/
+            cp pki/issued/${AWS::StackName}-server.crt ../../server_cert/
+            cp pki/private/${AWS::StackName}-server.key ../../server_cert/
+            cd ../../server_cert
+
+            CERT_ARN=$(aws acm import-certificate --certificate fileb://${AWS::StackName}-server.crt --private-key fileb://${AWS::StackName}-server.key --certificate-chain fileb://ca.crt --region ${AWS::Region} --output text)
+            aws ssm put-parameter --name ${ServerCertificateArnParameter} --value $CERT_ARN --type String --overwrite --region ${AWS::Region}
+
+            # Setting Up Configs 
+            /opt/aws/bin/cfn-init -v -s ${AWS::StackName} -r PrivateWebInstance --region ${AWS::Region}
+            
+            # send signal 
+            /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource PrivateWebInstance --region ${AWS::Region}
+
+
+
+  # Client VPN Endpoint
+  ClinetVPNEndpoint:
+    Type: 'AWS::EC2::ClientVpnEndpoint'
+    DependsOn:
+      - PrivateWebInstance
+    Properties:
+      AuthenticationOptions:
+        - Type: federated-authentication
+          FederatedAuthentication:
+            SAMLProviderArn: !Sub arn:aws:iam::${AWS::AccountId}:saml-provider/${ClientVPNIDPName}
+            SelfServiceSAMLProviderArn: !Sub arn:aws:iam::${AWS::AccountId}:saml-provider/${ClientVPNSelfServiceIDPName}
+      ClientCidrBlock: !Ref VPNClientCIDR
+      ConnectionLogOptions:
+        Enabled: True
+        CloudwatchLogGroup: !Ref ClientVPNLogGroup
+        CloudwatchLogStream: !Ref ClientVPNLogStream
+      SecurityGroupIds:
+        - !Ref ClientVPNSecurityGroup
+      SelfServicePortal: enabled
+      ServerCertificateArn: !Sub '{{resolve:ssm:${ServerCertificateArnParameter}:2}}'
+      # ServerCertificateArn: !Join ['', ['{{resolve:ssm:', !Ref ServerCertificateArnParameter, ':2}}' ]]
+      SplitTunnel: True
+      TagSpecifications:
+        - ResourceType: client-vpn-endpoint
+          Tags:
+          - Key: Name
+            Value: !Sub ${AWS::StackName}-ClientVPNEndpoint
+      TransportProtocol: udp
+      VpcId: !Ref VPNVPC
+      VpnPort: 443
+
+  # Client VPN Security Group
+  ClientVPNSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Client VPN Security Group
+      VpcId: !Ref VPNVPC
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: '0'
+          ToPort: '65535'
+          CidrIp: 0.0.0.0/0
+        - FromPort: 8
+          ToPort: -1
+          IpProtocol: "icmp"
+          Description: "Allow ICMP traffic"
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-VPNVPC-ClientVPNSecurityGroup
+
+  # Log setting for Client VPN Connection
+  ClientVPNLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties: 
+      LogGroupName: !Sub '/demo/${AWS::StackName}'
+      RetentionInDays: 1
+
+  ClientVPNLogStream:
+    Type: AWS::Logs::LogStream
+    Properties: 
+      LogGroupName: !Ref ClientVPNLogGroup
+      LogStreamName: 'vpnclient-connection-logs'
+
+  # Client VPN Network Association
+  ClientVPNNetwrokAssociation:
+    Type: AWS::EC2::ClientVpnTargetNetworkAssociation
+    Properties: 
+      ClientVpnEndpointId: !Ref ClinetVPNEndpoint
+      SubnetId: !Ref VPNVPCPrivateSubnet
+
+  # Client VPN Route for external VPC (10.0.0.0/8)
+  ClientVPNRouteExternalVPC:
+    Type: AWS::EC2::ClientVpnRoute
+    DependsOn:
+      - ClientVPNNetwrokAssociation
+    Properties: 
+      ClientVpnEndpointId: !Ref ClinetVPNEndpoint
+      TargetVpcSubnetId: !Ref VPNVPCPrivateSubnet
+      DestinationCidrBlock: '10.0.0.0/8'
+
+  # Client VPN Authorization Rule for Local VPC
+  ClientVPNAuthRouteForLocalVPC:
+    Type: AWS::EC2::ClientVpnAuthorizationRule
+    DependsOn:
+      - ClientVPNNetwrokAssociation
+    Properties: 
+      ClientVpnEndpointId: !Ref ClinetVPNEndpoint
+      TargetNetworkCidr: !Ref VPNVPCCIDR
+      AuthorizeAllGroups: true
+
+  # Client VPN Authorization Rule for external VPC (10.0.0.0/8)
+  ClientVPNAuthRouteForExternalVPC:
+    Type: AWS::EC2::ClientVpnAuthorizationRule
+    DependsOn:
+      - ClientVPNNetwrokAssociation
+    Properties: 
+      ClientVpnEndpointId: !Ref ClinetVPNEndpoint
+      TargetNetworkCidr: '10.0.0.0/8'
+      AuthorizeAllGroups: true
+
+Outputs:
+  PrivateWebInstanceIp:
+    Value: !GetAtt PrivateWebInstance.PrivateIp
+  PrivateWebInstanceURL:
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/systems-manager/session-manager/${PrivateWebInstance}"
