@@ -48,6 +48,12 @@ This demo is based on the following blog content.
   - ![private web instance](./images/Hello_.png)
 - Or you can test to ping to the private IP too.
 
+## Clean up
+
+- Delete the stack.
+- Delete the certficate that is automaticaly createt in the stack in AWS Certificate manager. The certificate's name is such as <stackname>-Demo-server.
+- Delete two IAM Identity providers.
+- Delete two SSO Applications in you AWS SSO.
 
 
 # Demo2: AWS Site-to-Site VPC Demo
