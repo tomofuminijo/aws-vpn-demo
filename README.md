@@ -15,7 +15,7 @@ This demo is based on the following blog content.
 
 [Authenticate AWS Client VPN users with AWS Single Sign-On](https://aws.amazon.com/jp/blogs/security/authenticate-aws-client-vpn-users-with-aws-single-sign-on/)
 
-***Note***: The Client VPC Endpoint created in this demo will be set as "Split-tunnel" enabled. Therefore, only the private IP (172.16.0.0/16 or 10.0.0.0/8) will communicate with the VPN, and other communications will not be affected. If you are an AWS instructor and are delivering online, you can still demo without affecting your delivery.
+***Note***: The Client VPC Endpoint created in this demo will be set as "Split-tunnel" enabled. Therefore, only the specific private IPs (172.16.0.0/16 or 10.0.0.0/8) will communicate through the Client VPN, and other communications will not be affected. If you are an AWS instructor and are delivering online, you can do this demo without affecting your delivery.
 
 
 ## Prerequisites
