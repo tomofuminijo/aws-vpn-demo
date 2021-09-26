@@ -5,7 +5,7 @@ You can demonstrate the feature of VPN Connection from onpremise network to VPC 
 - Demo1: AWS Client VPN authenticated with AWS SSO
 - (***Work in process***)Demo2: AWS Site-to-Site VPN
 
-# Demo1: AWS Client VPC authenticated with AWS SSO Demo
+# Demo1: AWS Client VPC authenticated with AWS SSO
 
 ![demo1-aws-client-vpc](./images/Client-VPN-Demo.png)
 
@@ -56,7 +56,7 @@ This demo is based on the following blog content.
 - Delete two SSO Applications in you AWS SSO.
 
 
-# Demo2: AWS Site-to-Site VPC Demo
+# Demo2: AWS Site-to-Site VPN
 
 **Work in process**
 
