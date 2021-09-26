@@ -5,7 +5,7 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
     - Label:
-        default: On-Premice Emlated VPC Settings
+        default: On-Premice Emulated VPC Settings
       Parameters:
         - OnpreVPCCIDR
         - OnpreVPCPublicSubnetCIDR
@@ -156,6 +156,9 @@ Resources:
   # VGW Site-to-Site VPN Connection
   OnpreVPNConnection: 
     Type: AWS::EC2::VPNConnection
+    DependsOn:
+      - VPNVPCVirtualPrivateGateway
+      - OnpreCustomerGateway
     Properties: 
       Type: ipsec.1
       CustomerGatewayId: 
@@ -171,6 +174,8 @@ Resources:
   # Add VGW Route to VPNVPC Private Subnet Route table
   VPNVPCPrivateRouteVGW:
     Type: 'AWS::EC2::Route'
+    DependsOn:
+      - OnpreVPNConnection
     Properties:
       RouteTableId:
         Fn::ImportValue: !Sub ${VPNVPCStackName}-VPNVPCPrivateRouteTableID
