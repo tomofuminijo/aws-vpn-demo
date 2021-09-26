@@ -1,6 +1,5 @@
 #!/bin/bash -eu
 
-
 # Cloudformation Get Parameter
 STACK_NAME=VPNDemo-SiteToSiteVPN
 
@@ -19,9 +18,9 @@ aws ec2 get-vpn-connection-device-sample-configuration  \
     --vpn-connection-id $OnpreVPNConnectionID  \
     --vpn-connection-device-type-id $DEVICE_TYPE_ID  \
     --query 'VpnConnectionDeviceSampleConfiguration' \
-    --output text > tmp/vpn-configure.txt
+    --output text > vpn-configure.txt
 
-FILE_NAME=tmp/vpn-configure.txt
+FILE_NAME=vpn-configure.txt
 
 preshared_keys=$(grep '\-\ Pre-Shared Key' $FILE_NAME)
 tunnel1_preshared_key=$(echo $preshared_keys | cut -d ' ' -f 5)
