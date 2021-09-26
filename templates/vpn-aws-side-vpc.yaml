@@ -102,6 +102,7 @@ Resources:
         - Key: Network
           Value: Private
 
+  # Internet Gateway Setting for VPNVPC
   VPNVPCInternetGateway:
     Type: 'AWS::EC2::InternetGateway'
     Properties:
@@ -112,11 +113,12 @@ Resources:
           Value: Demo
         - Key: Network
           Value: Public
-  VPNVPCAttachGateway:
+  VPNVPCIGWAttachment:
     Type: 'AWS::EC2::VPCGatewayAttachment'
     Properties:
       VpcId: !Ref VPNVPC
       InternetGatewayId: !Ref VPNVPCInternetGateway
+
   VPNVPCNatGateway:
     Type: 'AWS::EC2::NatGateway'
     Properties:
@@ -285,9 +287,9 @@ Resources:
                   <title>Hello!</title>
                 </head>
                 <body style="background: #d9dae9; text-align: center;">
-                    <h1>AWS VPN Demo</h1><br/>
+                    <h1>AWS VPN Demo - Private Web Instance on AWS</h1><br/>
                     <h1>Instance ID: <?php echo $instance_id; ?></h1>
-                    <h1>Local IP: <?php echo $local_ip; ?></h1>
+                    <h1>Private IP: <?php echo $local_ip; ?></h1>
                     <p>This information has been retrieved from the Instance Metadata service.</p>
                 </body>
                 </html>
@@ -321,7 +323,7 @@ Resources:
             yum install git -y
             yum update -y
  
-            # Create Server certficiate and import to ACM for Client VPN Endpoint
+            # Create Server certficiate
             export EASYRSA_BATCH=1
             git clone https://github.com/OpenVPN/easy-rsa.git
             cd easy-rsa/easyrsa3
@@ -335,7 +337,9 @@ Resources:
             cp pki/private/${AWS::StackName}-server.key ../../server_cert/
             cd ../../server_cert
 
+            # Import the server certificate to ACM for Client VPN Endpoint
             CERT_ARN=$(aws acm import-certificate --certificate fileb://${AWS::StackName}-server.crt --private-key fileb://${AWS::StackName}-server.key --certificate-chain fileb://ca.crt --region ${AWS::Region} --output text)
+            # Put the Imported Certificate ARN to SSM Parameter for using it to create Client VPN Endpoint
             aws ssm put-parameter --name ${ServerCertificateArnParameter} --value $CERT_ARN --type String --overwrite --region ${AWS::Region}
 
             # Setting Up Configs 
@@ -448,7 +452,15 @@ Resources:
       AuthorizeAllGroups: true
 
 Outputs:
+  VPNVPCID:
+    Value: !Ref VPNVPC
+    Export:
+      Name: !Sub "${AWS::StackName}-VPNVPCID" 
+  VPNVPCPrivateRouteTableID:
+    Value: !Ref VPNVPCPrivateRouteTable
+    Export:
+      Name: !Sub "${AWS::StackName}-VPNVPCPrivateRouteTableID" 
   PrivateWebInstanceIp:
     Value: !GetAtt PrivateWebInstance.PrivateIp
-  PrivateWebInstanceURL:
+  PrivateWebInstanceSessionManagerURL:
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/systems-manager/session-manager/${PrivateWebInstance}"

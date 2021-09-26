@@ -36,7 +36,7 @@ This demo is based on the following blog content.
 
 ## How to demo
 
-- Create Cloudformation stack by using [templates/ClientVPN.yaml](./templates/ClientVPN.yaml).
+- Create Cloudformation stack by using [templates/vpn-aws-side-vpc.yaml](./templates/vpn-aws-side-vpc.yaml).
 - After the stack is created, access to the client VPC Endpoint Management console, check the client VPC endpoint and copy the Self-service portal URL displayed at the bottom of the screen.
 - Access to the Self-service portal url in the browser then The AWS SSO signin screen will appear, and sign in. 
 - click "Download client configuration"
