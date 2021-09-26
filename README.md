@@ -3,7 +3,7 @@
 You can demonstrate the feature of VPN Connection from onpremise network to VPC on AWS.
 
 - Demo1: AWS Client VPN authenticated with AWS SSO
-- Demo2: AWS Site-to-Site VPN
+- Demo2: AWS Site-to-Site VPN with Virtual Private Gateway
 
 # Demo1: AWS Client VPC authenticated with AWS SSO
 
@@ -50,10 +50,10 @@ This demo is based on the following blog content.
 - Click "Connect" button on you client software.
 - Once you have connected the Client VPC, get the private IP address of the web instance that has been created by the stack in the Management console, and access the private ip on browser.
 - If the settings worked, you can see a screen similar to the following in your browser. **Note**: The local IP varies depending on the environment.
-  - ![private web instance](./images/Hello_.png)
+  - ![private web instance](./images/Hello_private.png)
 - Or you can test to ping to the private IP too.
 
-# Demo2: AWS Site-to-Site VPN
+# Demo2: AWS Site-to-Site VPN with Virtual Private Gateway
 
 ![demo2-aws-site-to-site](./images/Site-to-Site-VPN-Demo.png)
 
