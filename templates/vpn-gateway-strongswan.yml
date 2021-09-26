@@ -8,26 +8,6 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
     - Label:
-        default: System Classification
-      Parameters:
-      - pOrg
-      - pSystem
-      - pApp
-    - Label:
-        default: System Environment
-      Parameters:
-      - pEnvPurpose
-    - Label:
-        default: Authentication
-      Parameters:
-      - pAuthType
-      - pCertBucket
-      - pCgwCert
-      - pCgwPrivateKey
-      - pCgwPrivateKeyPassphraseSecretName
-      - pRootCaCert
-      - pSubordinateCaCert
-    - Label:
         default: VPN Tunnel 1
       Parameters:
       - pTunnel1PskKey
@@ -62,9 +42,25 @@ Metadata:
       - pAmiId
       - pInstanceType
     - Label:
-        default: On-Premise VPC Stack Name 
+        default: System Classification
       Parameters:
-        - OnpreVPCStackName
+      - pOrg
+      - pSystem
+      - pApp
+    - Label:
+        default: System Environment
+      Parameters:
+      - pEnvPurpose
+    - Label:
+        default: Authentication
+      Parameters:
+      - pAuthType
+      - pCertBucket
+      - pCgwCert
+      - pCgwPrivateKey
+      - pCgwPrivateKeyPassphraseSecretName
+      - pRootCaCert
+      - pSubordinateCaCert
 
     ParameterLabels:
       pOrg:
@@ -140,6 +136,11 @@ Metadata:
         default: EC2 AMI ID
 
 Parameters:
+  OnpreVPCPublicRouteTableID:
+    Type: String
+    Description: Onpre VPC Public Route Table ID
+    Default: ''
+  
   pOrg:
     Type: String
     Description: Used to qualify resource names
@@ -309,11 +310,6 @@ Parameters:
     Description: EC2 AMI ID
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
     Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-ebs'
-
-  OnpreVPCStackName: 
-    Type: String
-    Default: VPNDemo-OnpreVPC
-    Description: Enter On-Premise VPC Stack Name
 
 Rules:
   SubnetsInVPC:
@@ -1041,7 +1037,6 @@ Resources:
   VPNVPCPrivateRouteVGW:
     Type: 'AWS::EC2::Route'
     Properties:
-      RouteTableId:
-        Fn::ImportValue: !Sub ${OnpreVPCStackName}-OnpreVPCPublicRouteTableID
+      RouteTableId: !Ref OnpreVPCPublicRouteTableID
       DestinationCidrBlock: 172.16.0.0/16
       InstanceId: !Ref rVpnGateway

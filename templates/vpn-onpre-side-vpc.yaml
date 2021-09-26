@@ -310,6 +310,10 @@ Outputs:
     Value: !Ref OnpreVPC
     Export:
       Name: !Sub "${AWS::StackName}-OnpreVPCID" 
+  OnpreVPCCIDR:
+    Value: !Ref OnpreVPCCIDR
+    Export:
+      Name: !Sub "${AWS::StackName}-OnpreVPCCIDR" 
   OnpreVPCPublicSubnetID:
     Value: !Ref OnpreVPCPublicSubnet
     Export:
@@ -322,6 +326,8 @@ Outputs:
     Value: !Ref OnpreVPCPublicRouteTable
     Export:
       Name: !Sub "${AWS::StackName}-OnpreVPCPublicRouteTableID" 
+  OnpreVPNConnectionID:
+    Value: !Ref OnpreVPNConnection
 
   OnpreWebInstanceIp:
     Value: !GetAtt OnpreWebInstance.PrivateIp
