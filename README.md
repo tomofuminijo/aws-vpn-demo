@@ -91,7 +91,7 @@ This demo is based on the following blog content.
   aws cloudformation delete-stack --stack-name VPNDemo-ClientVPN
   aws cloudformation wait stack-delete-complete --stack-name VPNDemo-ClientVPN
   ```
-- Delete the certficate that is automaticaly createt in the stack in AWS Certificate manager. The certificate's name is such as <stackname>-Demo-server.
+- Delete the certficate in AWS Certificate manager that is automaticaly createt by the stack. The certificate's name is such as VPNDemo-ClientVPN-server.
 - Delete two IAM Identity providers.
 - Delete two SSO Applications in you AWS SSO.
 
