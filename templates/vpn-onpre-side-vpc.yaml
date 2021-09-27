@@ -172,15 +172,25 @@ Resources:
           Value: Demo
 
   # Add VGW Route to VPNVPC Private Subnet Route table
-  VPNVPCPrivateRouteVGW:
-    Type: 'AWS::EC2::Route'
+#  VPNVPCPrivateRouteVGW:
+#    Type: 'AWS::EC2::Route'
+#    DependsOn:
+#      - OnpreVPNConnection
+#    Properties:
+#      RouteTableId:
+#        Fn::ImportValue: !Sub ${VPNVPCStackName}-VPNVPCPrivateRouteTableID
+#      DestinationCidrBlock: 10.0.0.0/8
+#      GatewayId: !Ref VPNVPCVirtualPrivateGateway
+
+  # VGW propagate enabled on VPNVPC Private Subnet Route
+  VPNVPCPrivateRouteVGWRoutePropagation:
+    Type: 'AWS::EC2::VPNGatewayRoutePropagation'
     DependsOn:
       - OnpreVPNConnection
     Properties:
-      RouteTableId:
-        Fn::ImportValue: !Sub ${VPNVPCStackName}-VPNVPCPrivateRouteTableID
-      DestinationCidrBlock: 10.0.0.0/8
-      GatewayId: !Ref VPNVPCVirtualPrivateGateway
+      RouteTableIds:
+        - Fn::ImportValue: !Sub ${VPNVPCStackName}-VPNVPCPrivateRouteTableID
+      VpnGatewayId: !Ref VPNVPCVirtualPrivateGateway
 
   # On-Premise Web Instances Settings
   OnpreVPCHTTPICMPSecurityGroup:
@@ -268,7 +278,7 @@ Resources:
                 <head>
                   <title>Hello!</title>
                 </head>
-                <body style="background: #d9dae9; text-align: center;">
+                <body style="background: #e1f8d2; text-align: center;">
                     <h1>AWS VPN Demo - On-Premise Web Instance</h1><br/>
                     <h1>Instance ID: <?php echo $instance_id; ?></h1>
                     <h1>Private IP: <?php echo $local_ip; ?></h1>

@@ -5,19 +5,6 @@ You can demonstrate the feature of VPN Connection from onpremise network to VPC 
 - Demo1: AWS Client VPN authenticated with AWS SSO
 - Demo2: AWS Site-to-Site VPN with Virtual Private Gateway
 
-# Demo1: AWS Client VPC authenticated with AWS SSO
-
-![demo1-aws-client-vpc](./images/Client-VPN-Demo.png)
-
-[This image created by lucid chart](https://lucid.app/lucidchart/invitations/accept/inv_09bd1e41-9c85-4f11-89bd-99bd1a028714?view_items=SkpcrWSvMDYQ%2CSkpcL0ALpZH1%2CRupcZK0qZsse%2CXtpcL24kwHfa%2CAupcPyusYpcS%2CUypcnsH5SAgv%2CSkpckB-e_dvM%2CSkpcqOsgqnbv%2CGvpcD-dOSxFO%2CovpcKnMWmutN%2CSkpc1PTlG5qO%2CCApc~VCwzivK%2CFApc3~t33TIR)
-
-This demo is based on the following blog content.
-
-[Authenticate AWS Client VPN users with AWS Single Sign-On](https://aws.amazon.com/jp/blogs/security/authenticate-aws-client-vpn-users-with-aws-single-sign-on/)
-
-***Note***: The Client VPC Endpoint created in this demo will be set as "Split-tunnel" enabled. Therefore, only the specific private IPs (172.16.0.0/16 or 10.0.0.0/8) will communicate through the Client VPN, and other communications will not be affected. If you are an AWS instructor and are delivering online, you can do this demo without affecting your delivery.
-
-
 ## Prerequisites
 
 - AWS SSO is configured to use the internal AWS SSO identity store.
@@ -32,7 +19,39 @@ This demo is based on the following blog content.
 " section for detail: [Authenticate AWS Client VPN users with AWS Single Sign-On](https://aws.amazon.com/jp/blogs/security/authenticate-aws-client-vpn-users-with-aws-single-sign-on/)
 - A client device running Windows or macOS with the latest version of Client VPN software installed. You can download it from the [AWS Client VPN download](https://aws.amazon.com/jp/blogs/security/authenticate-aws-client-vpn-users-with-aws-single-sign-on/#:~:text=AWS%20Client%20VPN%20download).
 
-- ***Note***: VPC and ACM are not necessary to set up before, because these will be generated in the CloudFormation stack you will create later.
+- ***Note***: VPC and ACM are not necessary to set up in advance, because these will be generated in the CloudFormation stack you will create later.
+
+# Demo Launch Quick Commands
+
+If you are already familiar with this demo and want to start the environment right away, please execute the following commands.
+
+```
+cd aws-vpn-demo
+
+aws cloudformation create-stack --stack-name VPNDemo-ClientVPN --template-body file://./templates/vpn-aws-side-vpc.yaml --capabilities CAPABILITY_NAMED_IAM
+aws cloudformation wait stack-create-complete --stack-name VPNDemo-ClientVPN
+
+aws cloudformation create-stack --stack-name VPNDemo-SiteToSiteVPN --template-body file://./templates/vpn-onpre-side-vpc.yaml --capabilities CAPABILITY_NAMED_IAM
+aws cloudformation wait stack-create-complete --stack-name VPNDemo-SiteToSiteVPN
+
+./create-strongswan.sh
+aws cloudformation wait stack-create-complete --stack-name VPNDemo-strongswan
+```
+
+# Demo1: AWS Client VPC authenticated with AWS SSO
+
+![demo1-aws-client-vpc](./images/Client-VPN-Demo.png)
+
+[This image created by lucid chart](https://lucid.app/lucidchart/invitations/accept/inv_09bd1e41-9c85-4f11-89bd-99bd1a028714?view_items=SkpcrWSvMDYQ%2CSkpcL0ALpZH1%2CRupcZK0qZsse%2CXtpcL24kwHfa%2CAupcPyusYpcS%2CUypcnsH5SAgv%2CSkpckB-e_dvM%2CSkpcqOsgqnbv%2CGvpcD-dOSxFO%2CovpcKnMWmutN%2CSkpc1PTlG5qO%2CCApc~VCwzivK%2CFApc3~t33TIR)
+
+This demo is based on the following blog content.
+
+[Authenticate AWS Client VPN users with AWS Single Sign-On](https://aws.amazon.com/jp/blogs/security/authenticate-aws-client-vpn-users-with-aws-single-sign-on/)
+
+***Note***: The Client VPC Endpoint created in this demo will be set as "Split-tunnel" enabled. Therefore, only the specific private IPs (172.16.0.0/16 or 10.0.0.0/8) will communicate through the Client VPN, and other communications will not be affected. If you are an AWS instructor and are delivering online, you can do this demo without affecting your delivery.
+
+
+
 
 ## How to demo
 
@@ -73,6 +92,9 @@ This demo is based on the following blog content.
   ./create-strongswan.sh
   ```
   In the above command, the config file of VPN Connection has been downloaded and set the VPN parameter to Strongswan that has been launched in the EC2 instans. 
+  
+  ***Note***: If you receive errors when running AWS Command Line Interface (AWS CLI) commands, [make sure that you’re using the most recent AWS CLI version](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-troubleshooting.html#general-latest).
+  
 - After the stack is created, you can confirm that both tunnels status are "UP" in management console.
   - ![](./images/VPN_Connections___VPC_Management_Console.png)
 - You can test to access the private IP of OnpreWebInstance in your browser. The request will be sent from your local machine to the web instance residing on the on-premises network via Client VPN and Virtual Private Gateway. If the settings worked, you can see a screen similar to the following in your browser. **Note**: The Private IP varies depending on the environment.
