@@ -208,16 +208,6 @@ Resources:
           FromPort: '80'
           ToPort: '80'
           CidrIp: 0.0.0.0/0
-      SecurityGroupEgress:
-        - IpProtocol: tcp
-          FromPort: '0'
-          ToPort: '65535'
-          CidrIp: 0.0.0.0/0
-        - FromPort: 8
-          ToPort: -1
-          IpProtocol: "icmp"
-          Description: "Allow ICMP traffic"
-          CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
           Value: !Sub ${AWS::StackName}-OnpreVPC-HTTPICMPSG
