@@ -209,7 +209,7 @@ Resources:
   VPNVPCRoute53ResolverSecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
-      GroupDescription: Enable HTTP/ICMP Access
+      GroupDescription: Enable DNS Access
       VpcId: !Ref VPNVPC
       SecurityGroupIngress:
         - IpProtocol: tcp
