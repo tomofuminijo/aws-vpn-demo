@@ -35,6 +35,8 @@ In Demo2, the on-premises equivalent IPsec environment will be built using Stron
 If you are already familiar with this demo and want to start the environment right away, please execute the following commands.
 
 ```
+git clone https://github.com/tomofuminijo/aws-vpn-demo.git
+
 cd aws-vpn-demo
 
 aws cloudformation create-stack --stack-name VPNDemo-ClientVPN --template-body file://./templates/vpn-aws-side-vpc.yaml --capabilities CAPABILITY_NAMED_IAM
@@ -88,12 +90,10 @@ aws cloudformation wait stack-create-complete --stack-name VPNDemo-strongswan
 
 - Create Cloudformation stack by using [templates/vpn-onpre-side-vpc.yml](./templates/vpn-onpre-side-vpc.yaml). Execute the following command.
   ```
-  cd aws-vpn-demo
   aws cloudformation create-stack --stack-name VPNDemo-SiteToSiteVPN --template-body file://./templates/vpn-onpre-side-vpc.yaml --capabilities CAPABILITY_NAMED_IAM
   ```
 - After the stack is created, execute the following command to start the EC2 instance that will serve as the virtual router by Strongswan.
   ```
-  cd aws-vpn-demo
   ./create-strongswan.sh
   ```
   In the above command, the config file of VPN Connection has been downloaded and set the VPN parameter to Strongswan that has been launched in the EC2 instans. 

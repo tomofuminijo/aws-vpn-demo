@@ -18,12 +18,12 @@ Parameters:
   OnpreVPCCIDR:
     Description: CIDR Block for the OnpreVPC
     Type: String
-    Default: 10.0.0.0/16
+    Default: 10.99.0.0/16
     AllowedPattern: '[a-zA-Z0-9]+\..+'
   OnpreVPCPublicSubnetCIDR:
     Description: CIDR Block for OnpreVPC - Public Subnet
     Type: String
-    Default: 10.0.1.0/24
+    Default: 10.99.1.0/24
     AllowedPattern: '[a-zA-Z0-9]+\..+'
   VPNVPCStackName: 
     Type: String
