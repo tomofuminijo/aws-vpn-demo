@@ -272,7 +272,7 @@ Resources:
       - ServerCertificateArnParameter
     CreationPolicy:
       ResourceSignal:
-        Timeout: PT5M
+        Timeout: PT10M
     Metadata:
       AWS::CloudFormation::Init:
         configSets:
@@ -314,7 +314,7 @@ Resources:
                 ensureRunning: 'true'
     Properties:
       ImageId: !FindInMap [RegionAMIMap, !Ref "AWS::Region", AMI]
-      InstanceType: t2.micro
+      InstanceType: t3.micro
       IamInstanceProfile: !Ref EC2SSMRoleInstanceProfile
       SubnetId: !Ref VPNVPCPrivateSubnet
       SecurityGroupIds:
@@ -340,16 +340,16 @@ Resources:
             cd easy-rsa/easyrsa3
             ./easyrsa init-pki
             ./easyrsa build-ca nopass
-            ./easyrsa build-server-full ${AWS::StackName}-server nopass
+            ./easyrsa build-server-full ${AWS::StackName}-server.com nopass
 
             mkdir ../../server_cert/
             cp pki/ca.crt ../../server_cert/
-            cp pki/issued/${AWS::StackName}-server.crt ../../server_cert/
-            cp pki/private/${AWS::StackName}-server.key ../../server_cert/
+            cp pki/issued/${AWS::StackName}-server.com.crt ../../server_cert/
+            cp pki/private/${AWS::StackName}-server.com.key ../../server_cert/
             cd ../../server_cert
 
             # Import the server certificate to ACM for Client VPN Endpoint
-            CERT_ARN=$(aws acm import-certificate --certificate fileb://${AWS::StackName}-server.crt --private-key fileb://${AWS::StackName}-server.key --certificate-chain fileb://ca.crt --region ${AWS::Region} --output text)
+            CERT_ARN=$(aws acm import-certificate --certificate fileb://${AWS::StackName}-server.com.crt --private-key fileb://${AWS::StackName}-server.com.key --certificate-chain fileb://ca.crt --region ${AWS::Region} --output text)
             # Put the Imported Certificate ARN to SSM Parameter for using it to create Client VPN Endpoint
             aws ssm put-parameter --name ${ServerCertificateArnParameter} --value $CERT_ARN --type String --overwrite --region ${AWS::Region}
 
